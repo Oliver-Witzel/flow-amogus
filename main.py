@@ -3,6 +3,7 @@ from ultralytics import YOLO
 import cv2
 from client import Client
 import yaml
+import numpy as np
 
 # Load configuration
 with open('config.yml', 'r') as file:
@@ -15,6 +16,7 @@ rtsp_urls = config['video']['rtsp_urls']
 # Initialize YOLOv8 model and tracker
 model = YOLO(config['model']['path'])
 tracker = sv.ByteTrack()
+box_annotator = sv.BoxAnnotator()
 label_annotator = sv.LabelAnnotator()
 
 # Connect to all RTSP streams
@@ -34,16 +36,30 @@ try:
             
             labels = [f"#{tracker_id}" for tracker_id in detections.tracker_id]
             
+            # First draw boxes
+            frame_with_boxes = box_annotator.annotate(
+                scene=frame.copy(),
+                detections=detections
+            )
+            
+            # Then add labels to the frame with boxes
             annotated_frame = label_annotator.annotate(
-                scene=frame.copy(), 
-                detections=detections, 
+                scene=frame_with_boxes,
+                detections=detections,
                 labels=labels
             )
             
             frames.append(annotated_frame)
         
-        # Combine frames horizontally
-        combined_frame = cv2.hconcat(frames)
+        # Create black frame for the 4th position if needed
+        if len(frames) < 4:
+            black_frame = np.zeros((VIDEO_HEIGHT, VIDEO_WIDTH, 3), dtype=np.uint8)
+            frames.append(black_frame)
+        
+        # Create 2x2 grid
+        top_row = cv2.hconcat([frames[0], frames[1]])
+        bottom_row = cv2.hconcat([frames[2], frames[3]])
+        combined_frame = cv2.vconcat([top_row, bottom_row])
         
         # Display combined frame
         cv2.imshow('All Cameras', combined_frame)
