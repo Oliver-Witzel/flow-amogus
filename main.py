@@ -2,19 +2,22 @@ import supervision as sv
 from ultralytics import YOLO
 import cv2
 from client import Client
+import yaml
 
-VIDEO_SIZE = 600
+# Load configuration
+with open('config.yml', 'r') as file:
+    config = yaml.safe_load(file)
 
-model = YOLO('models/yolov8n-seg.pt')
+VIDEO_SIZE = config['video']['size']
+rtsp_urls = config['video']['rtsp_urls']
+
+# Initialize YOLOv8 model and tracker
+model = YOLO(config['model']['path'])
 tracker = sv.ByteTrack()
 label_annotator = sv.LabelAnnotator()
 
-#rtsp://admin:Daxhuz-kitnor-cekvi5@192.168.3.49/Preview_01_main
-#rtsp://admin:Daxhuz-kitnor-cekvi5@192.168.3.47/Preview_01_main
-#rtsp://admin:Daxhuz-kitnor-cekvi5@192.168.3.52/Preview_01_main
-
-rtsp_url = "rtsp://admin:Daxhuz-kitnor-cekvi5@192.168.3.52/Preview_01_main"
-cap = Client(rtsp_url)
+# Connect to RTSP stream
+cap = Client(rtsp_urls[0])
 
 try:
     while True:

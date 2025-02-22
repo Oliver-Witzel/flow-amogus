@@ -1,0 +1,9 @@
+video:
+  size: 600
+  rtsp_urls:
+    - "rtsp://admin:Daxhuz-kitnor-cekvi5@192.168.3.49/Preview_01_main"
+    - "rtsp://admin:Daxhuz-kitnor-cekvi5@192.168.3.47/Preview_01_main"
+    - "rtsp://admin:Daxhuz-kitnor-cekvi5@192.168.3.52/Preview_01_main"
+
+model:
+  path: "models/yolov8n-seg.pt"
