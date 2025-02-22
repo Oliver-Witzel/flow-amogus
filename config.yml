@@ -9,4 +9,4 @@ video:
   active_url: 2
 
 model:
-  path: "models/yolov8n-seg.pt"
+  path: "models/yolov8m-pose.pt"
