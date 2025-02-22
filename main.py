@@ -64,33 +64,35 @@ try:
                 frame_with_poses = frame_with_labels.copy()
                 keypoints = results.keypoints.data
                 
-                # Add debug print
-                print(f"Camera {i}, Keypoints shape: {keypoints.shape}")
-                print(f"First person keypoints:\n{keypoints[0] if len(keypoints) > 0 else 'None'}")
-                
-                for person_keypoints in keypoints:
-                    # Draw keypoint connections
-                    for connection in POSE_CONNECTIONS:
-                        pt1_x = int(person_keypoints[connection[0]][0])
-                        pt1_y = int(person_keypoints[connection[0]][1])
-                        pt2_x = int(person_keypoints[connection[1]][0])
-                        pt2_y = int(person_keypoints[connection[1]][1])
-                        conf1 = person_keypoints[connection[0]][2]
-                        conf2 = person_keypoints[connection[1]][2]
+                # Only proceed if we have valid keypoints
+                if len(keypoints) > 0 and keypoints.shape[-1] == 3:  # Check for valid shape
+                    for person_keypoints in keypoints:
+                        # Draw keypoint connections
+                        for connection in POSE_CONNECTIONS:
+                            pt1_x = int(person_keypoints[connection[0]][0])
+                            pt1_y = int(person_keypoints[connection[0]][1])
+                            pt2_x = int(person_keypoints[connection[1]][0])
+                            pt2_y = int(person_keypoints[connection[1]][1])
+                            conf1 = person_keypoints[connection[0]][2]
+                            conf2 = person_keypoints[connection[1]][2]
+                            
+                            # Skip if any coordinates are 0 or confidence is low
+                            if (conf1 > 0.5 and conf2 > 0.5 and  
+                                pt1_x > 0 and pt1_y > 0 and
+                                pt2_x > 0 and pt2_y > 0 and
+                                pt1_x < VIDEO_WIDTH and pt1_y < VIDEO_HEIGHT and
+                                pt2_x < VIDEO_WIDTH and pt2_y < VIDEO_HEIGHT):
+                                cv2.line(frame_with_poses, (pt1_x, pt1_y), (pt2_x, pt2_y), (0, 255, 0), 2)
                         
-                        # More strict confidence check
-                        if (conf1 > 0.5 and conf2 > 0.5 and  # Increased confidence threshold
-                            0 < pt1_x < VIDEO_WIDTH and 0 < pt1_y < VIDEO_HEIGHT and
-                            0 < pt2_x < VIDEO_WIDTH and 0 < pt2_y < VIDEO_HEIGHT):
-                            cv2.line(frame_with_poses, (pt1_x, pt1_y), (pt2_x, pt2_y), (0, 255, 0), 2)
-                        
-                    # Draw keypoints
-                    for kp in person_keypoints:
-                        x, y, conf = int(kp[0]), int(kp[1]), kp[2]
-                        if conf > 0 and 0 <= x < VIDEO_WIDTH and 0 <= y < VIDEO_HEIGHT:
-                            cv2.circle(frame_with_poses, (x, y), 4, (0, 0, 255), -1)
-                
-                frames.append(frame_with_poses)
+                        # Draw keypoints
+                        for kp in person_keypoints:
+                            x, y, conf = int(kp[0]), int(kp[1]), kp[2]
+                            if conf > 0.5 and x > 0 and y > 0 and x < VIDEO_WIDTH and y < VIDEO_HEIGHT:
+                                cv2.circle(frame_with_poses, (x, y), 4, (0, 0, 255), -1)
+                    
+                    frames.append(frame_with_poses)
+                else:
+                    frames.append(frame_with_labels)
             else:
                 frames.append(frame_with_labels)
         
